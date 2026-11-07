@@ -1,4 +1,4 @@
-"""Shared paths and helpers for the MIA analysis scripts (LiRA, U-LiRA, RMIA)."""
+"""Shared paths and helpers for the RMIA scripts."""
 import json
 from pathlib import Path
 
@@ -27,3 +27,9 @@ def load_model(path, classes, device):
         model.load_state_dict({k.removeprefix("module."): v for k, v in state.items()})
     model.requires_grad_(False)
     return model.eval().to(device)
+
+
+def atomic_save(obj, path):
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    torch.save(obj, tmp)
+    tmp.replace(path)

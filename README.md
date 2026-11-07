@@ -18,7 +18,6 @@ Python 3.12, PyTorch 2.x, torchvision, omegaconf, scikit-learn, matplotlib, pand
 | Sequential unlearning | `sequential.py`, `plot_sequential_summary.py`, `plot_sequential_3seed.py` |
 | Target (λ) / loss ablation | `spls_ablation/`, `run_lambda_ablation.sh` |
 | k ablation | `run_spls_k_ablation.sh`, `plot_spls_k_ablation.py` |
-| LiRA / U-LiRA | `lira.py`, `u_lira.py`, `shadow_model.py` |
 | RMIA | `run_rmia.py`, `rmia_common.py`, `train_reference.py`, `score_offline_rmia.py`, `evaluate_rmia.py` |
 | Representation analysis (CKA, attention) | `cka.py`, `attention.py` |
 | Gradient coupling / step-size diagnostics | `coupling_diag/` |

@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, Subset
 from torchvision.models import resnet18
 from trainer import train, test, optimizer_picker
 from utils import seed_torch
-from shadow_model import atomic_save
+from common import atomic_save
 from rmia_common import CFG, dataset, digest, ref_path, save_json
 
 
