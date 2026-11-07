@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torchvision.datasets import CIFAR10, CIFAR100
-from linear_probe import ROOT, REVISION, load_model, save_json
+from common import ROOT, REVISION, load_model, save_json
 from utils import get_transforms
 
 CFG = {'cifar10': (10, 6), 'cifar100': (100, 73)}

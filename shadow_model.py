@@ -15,7 +15,7 @@ from torchvision.datasets import CIFAR10, CIFAR100
 from models import get_model
 from trainer import optimizer_picker, train, test
 from utils import get_transforms, get_unlearn_loader, get_dataloader, seed_torch, note_print
-from linear_probe import ROOT, save_json
+from common import ROOT, save_json
 
 SEEDS = (3001, 3002, 3003, 3004)
 

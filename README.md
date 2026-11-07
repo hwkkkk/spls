@@ -20,9 +20,7 @@ Python 3.12, PyTorch 2.x, torchvision, omegaconf, scikit-learn, matplotlib, pand
 | k ablation | `run_spls_k_ablation.sh`, `plot_spls_k_ablation.py` |
 | LiRA / U-LiRA | `lira.py`, `u_lira.py`, `shadow_model.py` |
 | RMIA | `run_rmia.py`, `rmia_common.py`, `train_reference.py`, `score_offline_rmia.py`, `evaluate_rmia.py` |
-| CMIA | `cmia.py` |
-| Linear probing | `linear_probe.py`, `linear_probe_classes.py` |
-| Representation analysis (CKA, attention, t-SNE) | `cka.py`, `attention.py`, `tsne.py` |
+| Representation analysis (CKA, attention) | `cka.py`, `attention.py` |
 | Gradient coupling / step-size diagnostics | `coupling_diag/` |
 | Gap distribution, confidence bins | `spls_gap_confidence.py` |
 | Per-class retain accuracy | `per_class_retain.py` |

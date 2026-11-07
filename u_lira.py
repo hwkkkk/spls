@@ -17,7 +17,7 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import CIFAR10, CIFAR100
 
-from linear_probe import ROOT, REVISION, load_model, save_json
+from common import ROOT, REVISION, load_model, save_json
 from lira import shadow_stats
 from shadow_model import train_shadow, atomic_save
 from utils import get_transforms, get_unlearn_loader, seed_torch
@@ -302,12 +302,6 @@ def evaluate_dataset(ds, root, workers):
     diagnostics["out_shadow_forget_train_acc"] = [float(r["accuracy"]) for r in out_checks]
     diagnostics["original_test_accuracy"] = {str(s): json.loads((root / ds / "original" /
         f"shadow_seed{s}.json").read_text())["best_acc"] * 100 for s in IN_SEEDS}
-    lp_csv = ROOT / "linear_probe_results_seed2027/lp_seed2027.csv"
-    if lp_csv.exists():
-        with lp_csv.open() as f:
-            original_row = next(r for r in csv.DictReader(f)
-                                if r["dataset"] == ds and r["method"] == "original")
-        diagnostics["target_original_test_accuracy"] = float(original_row["output_overall"])
     save_json(root / ds / "diagnostics.json", diagnostics)
     save_json(root / ds / "rows.json", rows)
     save_json(root / ds / "retrain_control_rows.json", control_rows)

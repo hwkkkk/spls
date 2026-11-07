@@ -14,7 +14,7 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from torch.utils.data import DataLoader, Subset
 from torchvision.datasets import CIFAR10, CIFAR100
 
-from linear_probe import ROOT, PRETRAIN, REVISION, load_model, save_json
+from common import ROOT, PRETRAIN, REVISION, load_model, save_json
 from shadow_model import SEEDS, train_shadow
 from utils import get_transforms
 
@@ -161,16 +161,9 @@ def run(args, out):
         if method == "retrain":
             sanity["retrain_two_sided_within_5pp_of_chance"] = abs(metrics["auc_two_sided"] - 50) <= 5
         write_results(out, rows, sanity, dataset)
-    reference = json.loads((ROOT / "linear_probe_results_seed2027/manifest.json").read_text()) if (
-        ROOT / "linear_probe_results_seed2027/manifest.json").exists() else None
     shadow_accuracy = {str(seed): json.loads((out / "shadows" / f"shadow_seed{seed}.json").read_text())["best_acc"] * 100
                        for seed in SEEDS}
     sanity["shadow_best_retain_test_accuracy"] = shadow_accuracy
-    if reference:
-        # The prior evaluation is diagnostic only; it is never used to tune the attack.
-        with (ROOT / "linear_probe_results_seed2027/lp_seed2027.csv").open() as f:
-            retrain = next(r for r in csv.DictReader(f) if r["dataset"] == dataset and r["method"] == "retrain")
-        sanity["target_retrain_retain_test_accuracy"] = float(retrain["output_retain"])
     write_results(out, rows, sanity, dataset)
     save_json(out / "sanity.json", sanity)
     save_json(out / "status.json", {"status": "completed", "rows": len(rows)})
