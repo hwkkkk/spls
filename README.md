@@ -2,6 +2,8 @@
 
 Anonymous code release for review.
 
+> **Note:** In the code, the method name `ldmu` refers to **SPLS** (e.g. `--method ldmu`, `method/ldmu.py`, checkpoint names `*_ldmu_*`).
+
 ## Environment
 Python 3.12, PyTorch 2.x, torchvision, omegaconf, scikit-learn, matplotlib, pandas, tqdm.
 
