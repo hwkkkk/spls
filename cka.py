@@ -384,7 +384,58 @@ def extract_cka_embeddings(
                 f"  {layer}: {tuple(feat.shape)}"
             )
 
+        if not gap:
+            # Flattened features are huge for large N
+            # (layer1: N x 200704). Replace them with the
+            # centered N x N Gram matrix, computed on GPU.
+            for layer in list(outputs[name]):
+                outputs[name][layer] = centered_gram(
+                    outputs[name][layer],
+                    device,
+                )
+
     return outputs
+
+
+def centered_gram(X, device):
+    """
+    X: [N, D] -> centered Gram K = Xc Xc^T, [N, N] float64 (CPU).
+    """
+
+    prev_tf32 = torch.backends.cuda.matmul.allow_tf32
+    torch.backends.cuda.matmul.allow_tf32 = False
+
+    Xg = X.to(device, dtype=torch.float32)
+    Xg = Xg - Xg.mean(dim=0, keepdim=True)
+    K = (Xg @ Xg.T).double().cpu()
+
+    del Xg
+    torch.backends.cuda.matmul.allow_tf32 = prev_tf32
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    return K
+
+
+def gram_cka(K, L):
+    """
+    Linear CKA from centered Gram matrices.
+    """
+
+    numerator = (K * L).sum()
+
+    denominator = torch.sqrt(
+        K.pow(2).sum()
+        * L.pow(2).sum()
+    )
+
+    return float(
+        (
+            numerator
+            / (denominator + 1e-12)
+        ).item()
+    )
 
 
 # ============================================================
@@ -394,6 +445,7 @@ def extract_cka_embeddings(
 def calculate_cka_results(
     embeddings,
     split_name,
+    from_gram=False,
 ):
     """
     Retrain is ALWAYS the reference.
@@ -420,7 +472,13 @@ def calculate_cka_results(
 
         for layer in layers:
 
-            cka = linear_cka(
+            cka_fn = (
+                gram_cka
+                if from_gram
+                else linear_cka
+            )
+
+            cka = cka_fn(
                 embeddings[
                     reference
                 ][layer],
@@ -1001,6 +1059,7 @@ def main():
         calculate_cka_results(
             retain_embeddings,
             split_name="retain",
+            from_gram=args.no_gap,
         )
     )
 
@@ -1008,6 +1067,7 @@ def main():
         calculate_cka_results(
             forget_embeddings,
             split_name="forget",
+            from_gram=args.no_gap,
         )
     )
 
