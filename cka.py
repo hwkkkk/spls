@@ -166,9 +166,10 @@ def balanced_retain_indices(
 
 class ResNetEmbeddingExtractor:
 
-    def __init__(self, model):
+    def __init__(self, model, gap=True):
 
         self.model = model
+        self.gap = gap
 
         for name in [
             "layer1",
@@ -252,7 +253,7 @@ class ResNetEmbeddingExtractor:
 
                 feat = self.current[name]
 
-                if feat.ndim == 4:
+                if feat.ndim == 4 and self.gap:
 
                     feat = (
                         F.adaptive_avg_pool2d(
@@ -322,18 +323,19 @@ def linear_cka(X, Y):
         keepdim=True,
     )
 
-    XY = X.T @ Y
+    # Sample-space (N x N) Gram form; identical to
+    # ||X^T Y||_F^2 / (||X^T X||_F ||Y^T Y||_F) but
+    # tractable for flattened [N, C*H*W] features.
+    K = X @ X.T
+    L = Y @ Y.T
 
     numerator = (
-        XY.pow(2).sum()
+        (K * L).sum()
     )
 
-    XX = X.T @ X
-    YY = Y.T @ Y
-
     denominator = torch.sqrt(
-        XX.pow(2).sum()
-        * YY.pow(2).sum()
+        K.pow(2).sum()
+        * L.pow(2).sum()
     )
 
     return float(
@@ -352,6 +354,7 @@ def extract_cka_embeddings(
     models,
     loader,
     device,
+    gap=True,
 ):
     outputs = {}
 
@@ -362,7 +365,10 @@ def extract_cka_embeddings(
         )
 
         extractor = (
-            ResNetEmbeddingExtractor(model)
+            ResNetEmbeddingExtractor(
+                model,
+                gap=gap,
+            )
         )
 
         outputs[name] = extractor.extract(
@@ -627,6 +633,25 @@ def main():
         ),
     )
 
+    parser.add_argument(
+        "--retain-samples",
+        type=int,
+        default=None,
+        help=(
+            "Total retain samples (class-balanced). "
+            "Default: same as forget split."
+        ),
+    )
+
+    parser.add_argument(
+        "--no-gap",
+        action="store_true",
+        help=(
+            "Flatten full [C,H,W] feature maps "
+            "instead of global average pooling."
+        ),
+    )
+
     # ========================================================
     # DataLoader
     # ========================================================
@@ -857,6 +882,8 @@ def main():
         f"{model_name}_"
         f"forget{forget_count}_"
         f"seed{args.seed}"
+        + ("_nogap" if args.no_gap else "")
+        + (f"_retain{args.retain_samples}" if args.retain_samples else "")
     )
 
     # ========================================================
@@ -886,8 +913,18 @@ def main():
         len(forget_candidates),
     )
 
+    retain_n = (
+        args.retain_samples
+        if args.retain_samples is not None
+        else cka_n
+    )
+
     print(
         f"[CKA samples per split] {cka_n}"
+    )
+
+    print(
+        f"[CKA retain samples] {retain_n}"
     )
 
     forget_indices = (
@@ -905,7 +942,7 @@ def main():
         balanced_retain_indices(
             testset.targets,
             retain_classes,
-            num_samples=cka_n,
+            num_samples=retain_n,
             seed=args.seed + 1,
         )
     )
@@ -941,6 +978,7 @@ def main():
             models,
             retain_loader,
             device,
+            gap=not args.no_gap,
         )
     )
 
@@ -953,6 +991,7 @@ def main():
             models,
             forget_loader,
             device,
+            gap=not args.no_gap,
         )
     )
 
